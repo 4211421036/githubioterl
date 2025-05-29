@@ -47,7 +47,6 @@ jobs:
       run: |
         rebar3 compile
         rebar3 ex_doc
-        
     - name: Publish package to Hex.pm
       env:
         HEX_API_KEY: ${{ secrets.GitHubIoT }}
