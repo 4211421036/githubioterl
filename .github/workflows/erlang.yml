@@ -30,13 +30,21 @@ jobs:
         rebar3 compile
         rebar3 ex_doc
         
-    - name: Authenticate with Hex
+    - name: Setup Hex authentication
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
       run: |
+        # Create both config directories
         mkdir -p ~/.config/rebar3
+        mkdir -p ~/.hex
+        
+        # Create config files
         echo "{hex, [{api_key, \"$HEX_API_KEY\"}]}." > ~/.config/rebar3/hex.config
-        echo '{"hexpm":{"api_key":"'"$HEX_API_KEY"'"}}' > ~/.hex/hex.config
+        echo "{\"hexpm\":{\"api_key\":\"$HEX_API_KEY\"}}" > ~/.hex/hex.config
+        
+        # Set correct permissions
+        chmod 600 ~/.config/rebar3/hex.config
+        chmod 600 ~/.hex/hex.config
         
     - name: Verify authentication
       run: |
