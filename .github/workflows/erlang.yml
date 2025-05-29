@@ -1,44 +1,38 @@
-name: Erlang CI/CD
+name: Publish to Hex.pm
 
 on:
-  push:
-    branches: [ main ]
   release:
     types: [published]
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
-    if: |
-      github.ref == 'refs/heads/main' ||
-      (github.event_name == 'release' && github.event.action == 'published')
-    env:
-      # Biar bisa dibaca oleh rebar3_hex
-      HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Erlang
-        uses: erlef/setup-beam@v1
-        with:
-          otp-version: "26.0"
-          rebar3-version: "3.22.1"
-
-      - name: Setup rebar3_hex plugin & Build/Test
-        run: |
-          mkdir -p ~/.config/rebar3
-          echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
-
-          rebar3 deps
-          rebar3 compile
-          rebar3 eunit
-
-      - name: Authenticate to Hex.pm (non-interactive)
-        run: |
-          # Pipe API key ke stdin rebar3, sehingga rebar3_hex tahu kredensialnya
-          echo "$HEX_API_KEY" | rebar3 hex user auth
-
-      - name: Publish to Hex.pm
-        run: |
-          echo "Publishing to Hex.pm..."
-          rebar3 hex publish --yes
+    - uses: actions/checkout@v4
+    
+    - name: Set up Erlang
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: "26.0"
+        
+    - name: Install Rebar3
+      run: |
+        curl -LO https://s3.amazonaws.com/rebar3/rebar3
+        chmod +x rebar3
+        sudo mv rebar3 /usr/local/bin/
+        
+    - name: Build package
+      run: |
+        rebar3 compile
+        rebar3 ex_doc
+        
+    - name: Configure Hex API key
+      env:
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+      run: |
+        mkdir -p ~/.config/rebar3
+        echo "{hex, [{api_key, \"$HEX_API_KEY\"}]}." > ~/.config/rebar3/hex.config
+        
+    - name: Publish to Hex.pm
+      run: |
+        rebar3 hex publish --yes
