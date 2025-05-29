@@ -36,11 +36,11 @@ jobs:
         # Create hex config directory
         mkdir -p ~/.hex
         
-        # Write the API key to hex config
+        # Write the API key to hex config file
         echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
         
-        # Alternative: authenticate using the API key directly
-        rebar3 hex user auth --key "${{ secrets.HEX_API_KEY }}"
+        # Set proper permissions
+        chmod 600 ~/.hex/hex_api_key
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
     
