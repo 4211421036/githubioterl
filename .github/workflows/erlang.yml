@@ -48,9 +48,14 @@ jobs:
         rebar3 compile
         rebar3 ex_doc
         
-    - name: Publish package to Hex.pm
+    - name: Authenticate to Hex.pm
       env:
         HEX_API_KEY: ${{ secrets.GitHubIoT }}
+      run: |
+        # Autentikasi ke Hex.pm dengan API key
+        rebar3 hex user auth "$HEX_API_KEY"
+
+    - name: Publish package to Hex.pm
       run: rebar3 hex publish --yes
 
 
