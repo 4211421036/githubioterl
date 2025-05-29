@@ -42,7 +42,7 @@ jobs:
         rebar3 ex_doc
         
     - name: Publish to Hex
-      if: github.event_name == 'release' && github.event.action == 'published'
+      if: github.ref == 'refs/heads/main'
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
       run: |
