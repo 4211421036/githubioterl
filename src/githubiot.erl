@@ -1,10 +1,15 @@
 -module(githubiot).
 -export([init/2, get_current_sha/1, upload_to_github/3]).
 
-%% Add these type specifications for JSX functions
--type jsx_json_term() :: jsx:json_term().
--type jsx_decoder_option() :: jsx:decoder_option().
--type jsx_encoder_option() :: jsx:encoder_option().
+%% Define our own JSON types since jsx types aren't exported
+-type json_value() :: 
+    null
+    | boolean()
+    | binary()
+    | integer()
+    | float()
+    | [json_value()]
+    | #{binary() => json_value()}.
 
 -type state() :: #{token := binary(), repo_url := binary(), last_sha := binary()}.
 
@@ -31,7 +36,7 @@ get_current_sha(State = #{token := Token, repo_url := RepoUrl}) ->
             try 
                 JsonData = jsx:decode(list_to_binary(Body), [return_maps]),
                 case JsonData of
-                    #{<<"sha">> := Sha} ->
+                    #{<<"sha">> := Sha} when is_binary(Sha) ->
                         NewState = State#{last_sha => Sha},
                         {ok, Sha, NewState};
                     _ ->
@@ -48,7 +53,7 @@ get_current_sha(State = #{token := Token, repo_url := RepoUrl}) ->
     end.
 
 %% @doc Upload data to GitHub repository
--spec upload_to_github(state(), jsx_json_term(), binary()) -> {ok, binary(), state()} | {error, term(), state()}.
+-spec upload_to_github(state(), json_value(), binary()) -> {ok, binary(), state()} | {error, term(), state()}.
 upload_to_github(State = #{token := Token, repo_url := RepoUrl, last_sha := LastSha}, JsonData, _) ->
     Headers = [
         {"Authorization", binary_to_list(Token)},
@@ -72,7 +77,7 @@ upload_to_github(State = #{token := Token, repo_url := RepoUrl, last_sha := Last
                 try
                     RespJson = jsx:decode(list_to_binary(RespBody), [return_maps]),
                     case RespJson of
-                        #{<<"content">> := #{<<"sha">> := NewSha}} ->
+                        #{<<"content">> := #{<<"sha">> := NewSha}} when is_binary(NewSha) ->
                             NewState = State#{last_sha => NewSha},
                             {ok, NewSha, NewState};
                         _ ->
