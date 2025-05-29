@@ -50,11 +50,10 @@ jobs:
         
     - name: Configure Hex.pm
       env:
-        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        HEX_API_KEY: ${{ secrets.GitHubIoT }}    # atau secrets.HEX_API_KEY jika kamu ganti nama secret
       run: |
         mkdir -p ~/.config/rebar3
         echo '{hex, [{api_key, "'"$HEX_API_KEY"'"}]}.' > ~/.config/rebar3/hex.config
-        
-    - name: Publish package
-      run: |
-        rebar3 hex publish --yes
+  
+    - name: Publish package to Hex.pm
+      run: rebar3 hex publish --yes
