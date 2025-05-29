@@ -9,45 +9,44 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
-    
+    if: |
+      github.ref == 'refs/heads/main' ||
+      (github.event_name == 'release' && github.event.action == 'published')
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Erlang
-      uses: erlef/setup-beam@v1
-      with:
-        otp-version: "26.0"
-        rebar3-version: "3.22.1"
-    
-    - name: Setup and Build
-      run: |
-        # Setup hex plugin
-        mkdir -p ~/.config/rebar3
-        echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
-        
-        # Build
-        rebar3 deps
-        rebar3 compile
-        rebar3 eunit
-    
-    - name: Authenticate with Hex
-      run: |
-        # Create hex config directory
-        mkdir -p ~/.hex
-        
-        # Write the API key to hex config file
-        echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
-        
-        # Set proper permissions
-        chmod 600 ~/.hex/hex_api_key
-      env:
-        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-    
-    - name: Publish to Hex
-      run: |
-        echo "Publishing to Hex.pm..."
-        # Use hex publish with the API key from environment
-        HEX_API_KEY="${{ secrets.HEX_API_KEY }}" rebar3 hex publish --yes
-      env:
-        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+      - uses: actions/checkout@v4
+
+      - name: Set up Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "26.0"
+          rebar3-version: "3.22.1"
+
+      - name: Setup and Build
+        run: |
+          # Setup rebar3_hex plugin
+          mkdir -p ~/.config/rebar3
+          echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
+
+          # Build & test
+          rebar3 deps
+          rebar3 compile
+          rebar3 eunit
+
+      - name: Authenticate with Hex.pm
+        run: |
+          mkdir -p ~/.hex
+          # Simpan API key
+          echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
+          chmod 600 ~/.hex/hex_api_key
+
+          # Juga jalankan auth pada rebar3
+          rebar3 hex user auth "${{ secrets.HEX_API_KEY }}"
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+
+      - name: Publish to Hex.pm
+        run: |
+          echo "Publishing to Hex.pm..."
+          rebar3 hex publish --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
