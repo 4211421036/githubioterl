@@ -46,5 +46,6 @@ jobs:
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
       run: |
-        rebar3 hex user auth --key $HEX_API_KEY
+        mkdir -p ~/.config/rebar3
+        echo '{hex, [{api_key, "'"$HEX_API_KEY"'"}]}.' > ~/.config/rebar3/hex.config
         rebar3 hex publish --yes
