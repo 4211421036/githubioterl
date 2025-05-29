@@ -48,13 +48,17 @@ jobs:
         rebar3 compile
         rebar3 ex_doc
         
-    - name: Authenticate to Hex.pm (non-interactive)
+    - name: Configure Hex.pm write-key
       env:
-        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
-        HEX_API_KEY:   ${{ secrets.GitHubIoT }}
+        HEX_API_KEY: ${{ secrets.GitHubIoT }}
       run: |
-        # langsung kirim USER dan KEY sebagai argumen
-        rebar3 hex user auth "$HEX_USERNAME" "$HEX_API_KEY"
-
+        mkdir -p ~/.config/rebar3
+        cat <<EOF > ~/.config/rebar3/hex.config
+        {user, [
+          {api_key, "${HEX_API_KEY}"}
+        ]}.
+        EOF
+    
     - name: Publish package to Hex.pm
       run: rebar3 hex publish --yes
+
