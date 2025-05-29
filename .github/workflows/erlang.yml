@@ -1,10 +1,6 @@
 name: Publish to Hex.pm
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   release:
     types: [published]
 
@@ -25,16 +21,18 @@ jobs:
         chmod +x rebar3
         sudo mv rebar3 /usr/local/bin/
         
-    - name: Build
+    - name: Build and generate docs
       run: |
         rebar3 compile
         rebar3 ex_doc
         
-    - name: Publish to Hex
+    - name: Configure Hex
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
       run: |
-        # Non-interactive auth method
-        mkdir -p ~/.config/rebar3
-        echo "{hex, [{api_key, <<\"$HEX_API_KEY\">>}]}." > ~/.config/rebar3/hex.config
+        mkdir -p ~/.hex
+        echo '{"hexpm":{"api_key":"'"$HEX_API_KEY"'"}}' > ~/.hex/hex.config
+        
+    - name: Publish package
+      run: |
         rebar3 hex publish --yes
