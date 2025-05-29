@@ -51,34 +51,33 @@ jobs:
       run: |
         mkdir -p ~/.config/rebar3
         echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
-        echo "Hex plugin configured"
     
     - name: Compile
       run: |
         rebar3 deps
         rebar3 compile
     
-    - name: Authenticate and Publish to Hex.pm
+    - name: Publish with direct authentication
       run: |
-        echo "Setting up authentication..."
-        # Install expect for interactive authentication
-        sudo apt-get update && sudo apt-get install -y expect
+        echo "Publishing to Hex.pm with direct authentication..."
         
-        echo "Authenticating with Hex.pm..."
-        expect << 'EOF'
-        spawn rebar3 hex user auth
-        expect "Username:" { send "$env(HEX_USERNAME)\r" }
-        expect "Password:" { send "$env(HEX_API_KEY)\r" }
-        expect eof
-        EOF
+        # Method 1: Try with stdin authentication
+        echo -e "$HEX_USERNAME\n$HEX_API_KEY" | rebar3 hex user auth && rebar3 hex publish --yes
         
-        echo "Authentication completed, verifying..."
-        rebar3 hex user whoami
-        
-        echo "Publishing to Hex.pm..."
-        rebar3 hex publish --yes
-        
-        echo "Publication completed successfully!"
+        # If that fails, try method 2
+        if [ $? -ne 0 ]; then
+          echo "Method 1 failed, trying alternative..."
+          
+          # Create hex config file directly
+          mkdir -p ~/.hex
+          cat > ~/.hex/hex_config << EOF
+            %% Hex configuration file
+            {api_key, <<"$HEX_API_KEY">>}.
+            {username, <<"$HEX_USERNAME">>}.
+            EOF          
+          # Try publish again
+          rebar3 hex publish --yes
+        fi
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
