@@ -77,11 +77,10 @@ jobs:
       
     - name: Configure Hex authentication
       run: |
-        mkdir -p ~/.hex
-        echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
+        rebar3 hex user auth --username=$HEX_USERNAME --key=$HEX_API_KEY
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
-        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        HEX_API_KEY: ${{ secrets.GITHUBIOT }}
         
     - name: Debug - Check hex config
       run: |
@@ -93,4 +92,4 @@ jobs:
         DIAGNOSTIC=1 rebar3 hex publish --yes || rebar3 report "hex publish --yes"
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
-        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        HEX_API_KEY: ${{ secrets.GITHUBIOT }}
