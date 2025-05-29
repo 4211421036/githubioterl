@@ -30,7 +30,7 @@ get_current_sha(State = #{token := Token, repo_url := RepoUrl}) ->
                 _ ->
                     {error, invalid_json_response, State}
             catch
-                _:_ ->
+                error:_ ->
                     {error, json_decode_error, State}
             end;
         {ok, {{_, Status, _}, _, _}} ->
@@ -68,7 +68,7 @@ upload_to_github(State = #{token := Token, repo_url := RepoUrl}, JsonData, LastS
                     _ ->
                         {error, invalid_json_response, State}
                 catch
-                    _:_ ->
+                    error:_ ->
                         {error, json_decode_error, State}
                 end;
             {ok, {{_, Status, _}, _, _}} ->
@@ -77,6 +77,6 @@ upload_to_github(State = #{token := Token, repo_url := RepoUrl}, JsonData, LastS
                 {error, Reason, State}
         end
     catch
-        _:Reason ->
+        error:Reason ->
             {error, {encode_error, Reason}, State}
     end.
