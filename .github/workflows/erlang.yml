@@ -47,6 +47,7 @@ jobs:
     - name: Publish to Hex
       run: |
         echo "Publishing to Hex.pm..."
-        rebar3 hex publish --yes
+        # Use hex publish with the API key from environment
+        HEX_API_KEY="${{ secrets.HEX_API_KEY }}" rebar3 hex publish --yes
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
