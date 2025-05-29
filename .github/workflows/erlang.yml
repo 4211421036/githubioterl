@@ -78,9 +78,18 @@ jobs:
     - name: Configure Hex authentication
       run: |
         echo "Setting up Hex authentication..."
-        export HEX_API_KEY=${{ secrets.GITHUBIOT }}
-        export HEX_USERNAME=${{ secrets.HEX_USERNAME }}
-        rebar3 hex user auth --key=$HEX_API_KEY --username=$HEX_USERNAME
+        # Method 1: Try interactive auth with expect
+        expect -c "
+        spawn rebar3 hex user auth
+        expect \"Username:\" { send \"$HEX_USERNAME\r\" }
+        expect \"Password:\" { send \"$HEX_API_KEY\r\" }
+        expect eof
+        " || echo "Interactive auth failed, trying alternative..."
+        
+        # Method 2: Try with config file
+        mkdir -p ~/.config/rebar3
+        echo "{username, <<\"$HEX_USERNAME\">>}." > ~/.config/rebar3/hex_user.config
+        echo "{api_key, <<\"$HEX_API_KEY\">>}." >> ~/.config/rebar3/hex_user.config
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.GITHUBIOT }}
