@@ -48,7 +48,7 @@ jobs:
         
     - name: Verify authentication
       run: |
-        rebar3 hex user whoami
+        rebar3 hex user g4lihru
         
     - name: Publish package
       run: |
