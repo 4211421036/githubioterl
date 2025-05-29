@@ -1,4 +1,5 @@
 name: Erlang CI/CD
+
 on:
   push:
     branches: [ main ]
@@ -17,26 +18,31 @@ jobs:
       uses: erlef/setup-beam@v1
       with:
         otp-version: "26.0"
-        
-    - name: Install Rebar3
-      run: |
-        curl -LO https://s3.amazonaws.com/rebar3/rebar3
-        chmod +x rebar3
-        sudo mv rebar3 /usr/local/bin/
-        
+        rebar3-version: "3.22.1"
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          _build
+          deps
+        key: ${{ runner.os }}-erlang-${{ hashFiles('**/rebar.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-erlang-
+    
     - name: Build
       run: |
         rebar3 deps
         rebar3 compile
-        
+    
     - name: Run Tests
       run: |
         rebar3 eunit
-        
+    
     - name: Run Dialyzer
       run: |
         rebar3 dialyzer || echo "Dialyzer completed with warnings"
-        
+    
     - name: Build Docs
       if: github.ref == 'refs/heads/main'
       run: |
@@ -54,57 +60,52 @@ jobs:
       uses: erlef/setup-beam@v1
       with:
         otp-version: "26.0"
-        
-    - name: Install Rebar3
-      run: |
-        curl -LO https://s3.amazonaws.com/rebar3/rebar3
-        chmod +x rebar3
-        sudo mv rebar3 /usr/local/bin/
-        
+        rebar3-version: "3.22.1"
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          _build
+          deps
+        key: ${{ runner.os }}-erlang-${{ hashFiles('**/rebar.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-erlang-
+    
     - name: Install hex plugin
       run: |
         mkdir -p ~/.config/rebar3
         echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
-      
+    
     - name: Install dependencies
       run: rebar3 deps
-      
+    
     - name: Compile
       run: rebar3 compile
-      
+    
     - name: Run tests before publish
       run: rebar3 eunit
-      
+    
     - name: Configure Hex authentication
       run: |
-        echo "Setting up Hex authentication..."
-        # Method 1: Try interactive auth with expect
-        expect -c "
-        spawn rebar3 hex user auth
-        expect \"Username:\" { send \"$HEX_USERNAME\r\" }
-        expect \"Password:\" { send \"$HEX_API_KEY\r\" }
-        expect eof
-        " || echo "Interactive auth failed, trying alternative..."
+        echo "Configuring Hex authentication..."
+        # Create hex config directory
+        mkdir -p ~/.hex
         
-        # Method 2: Try with config file
-        mkdir -p ~/.config/rebar3
-        echo "{username, <<\"$HEX_USERNAME\">>}." > ~/.config/rebar3/hex_user.config
-        echo "{api_key, <<\"$HEX_API_KEY\">>}." >> ~/.config/rebar3/hex_user.config
+        # Write API key to hex config
+        echo "$HEX_API_KEY" > ~/.hex/hex_api_key
+        
+        # Set proper permissions
+        chmod 600 ~/.hex/hex_api_key
+        
+        # Verify authentication
+        rebar3 hex user whoami
       env:
-        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
-        HEX_API_KEY: ${{ secrets.GITHUBIOT }}
-        
-    - name: Debug - Check hex config
-      run: |
-        echo "Testing authentication..."
-        rebar3 hex user whoami || echo "Auth failed"
-        echo "Checking config files:"
-        find ~ -name "*.config" -type f 2>/dev/null | head -10
-        
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+    
     - name: Publish to Hex.pm
       run: |
         echo "Publishing to Hex.pm..."
         rebar3 hex publish --yes
       env:
-        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
-        HEX_API_KEY: ${{ secrets.GITHUBIOT }}
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
