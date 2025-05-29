@@ -1,3 +1,3 @@
-# Ignore warnings about jsx functions that are known to exist
-{unknown_function, {jsx, decode, 2}}.
-{unknown_function, {jsx, encode, 1}}.
+# Ignore warnings about jsx internals
+{unknown_type, {jsx, decoder_option, 0}}.
+{unknown_type, {jsx, encoder_option, 0}}.
