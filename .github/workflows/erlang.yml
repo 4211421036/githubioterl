@@ -84,8 +84,11 @@ jobs:
         
     - name: Debug - Check hex config
       run: |
-        rebar3 hex user whoami || echo "Not authenticated"
+        echo "Testing authentication..."
+        rebar3 hex user whoami
+        echo "List config files:"
         ls -la ~/.config/rebar3/ || echo "No config dir"
+        ls -la ~/.hex/ || echo "No hex dir"
         
     - name: Publish to Hex.pm
       run: |
