@@ -10,6 +10,7 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -30,14 +31,22 @@ jobs:
         rebar3 compile
         rebar3 eunit
     
+    - name: Authenticate with Hex
+      run: |
+        # Create hex config directory
+        mkdir -p ~/.hex
+        
+        # Write the API key to hex config
+        echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
+        
+        # Alternative: authenticate using the API key directly
+        rebar3 hex user auth --key "${{ secrets.HEX_API_KEY }}"
+      env:
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+    
     - name: Publish to Hex
       run: |
         echo "Publishing to Hex.pm..."
-        
-        # Simple approach - just set the environment and publish
-        export HEX_API_KEY="${{ secrets.HEX_API_KEY }}"
-        
-        # Publish with API key as environment variable
         rebar3 hex publish --yes
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
