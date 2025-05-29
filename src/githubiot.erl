@@ -23,13 +23,16 @@ get_current_sha(State = #{token := Token, repo_url := RepoUrl}) ->
     
     case httpc:request(get, {binary_to_list(RepoUrl), Headers}, [], []) of
         {ok, {{_, 200, _}, _, Body}} ->
-            try jsx:decode(list_to_binary(Body), [return_maps]) of
-                #{<<"sha">> := Sha} ->
-                    NewState = State#{last_sha => Sha},
-                    {ok, Sha, NewState};
-                _ ->
-                    {error, invalid_json_response, State}
-            catch
+            try 
+                JsonData = jsx:decode(list_to_binary(Body), [return_maps]),
+                case JsonData of
+                    #{<<"sha">> := Sha} ->
+                        NewState = State#{last_sha => Sha},
+                        {ok, Sha, NewState};
+                    _ ->
+                        {error, invalid_json_response, State}
+                end
+            catch 
                 _:_ -> 
                     {error, json_decode_error, State}
             end;
@@ -49,7 +52,7 @@ upload_to_github(State = #{token := Token, repo_url := RepoUrl, last_sha := Last
         {"Accept", "application/json"}
     ],
     
-    try
+    try 
         JsonBinary = jsx:encode(JsonData),
         EncodedData = base64:encode(JsonBinary),
         
@@ -61,12 +64,15 @@ upload_to_github(State = #{token := Token, repo_url := RepoUrl, last_sha := Last
         
         case httpc:request(put, {binary_to_list(RepoUrl), Headers, "application/json", Payload}, [], []) of
             {ok, {{_, 200, _}, _, RespBody}} ->
-                try jsx:decode(list_to_binary(RespBody), [return_maps]) of
-                    #{<<"content">> := #{<<"sha">> := NewSha}} ->
-                        NewState = State#{last_sha => NewSha},
-                        {ok, NewSha, NewState};
-                    _ ->
-                        {error, invalid_json_response, State}
+                try
+                    RespJson = jsx:decode(list_to_binary(RespBody), [return_maps]),
+                    case RespJson of
+                        #{<<"content">> := #{<<"sha">> := NewSha}} ->
+                            NewState = State#{last_sha => NewSha},
+                            {ok, NewSha, NewState};
+                        _ ->
+                            {error, invalid_json_response, State}
+                    end
                 catch
                     _:_ ->
                         {error, json_decode_error, State}
