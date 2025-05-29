@@ -47,8 +47,18 @@ jobs:
       run: |
         rebar3 compile
         rebar3 ex_doc
-    - name: Publish package to Hex.pm
+
+    - name: Package Erlang release for Hex.pm
+      run: |
+        mkdir -p _build/default/hex
+        TARBALL=$(rebar3 hex package | awk '/creates /{print $2}')
+        echo "Created $TARBALL"
+
+    - name: Publish to Hex.pm via API
       env:
         HEX_API_KEY: ${{ secrets.GitHubIoT }}
       run: |
-        rebar3 hex publish --yes --api-key "$HEX_API_KEY"
+        curl -v \
+          -H "Authorization: Bearer $HEX_API_KEY" \
+          -F "tarball=@${TARBALL}" \
+          https://repo.hex.pm/api/packages/githubiot/releases
