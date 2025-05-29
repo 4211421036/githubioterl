@@ -50,15 +50,20 @@ jobs:
 
     - name: Package Erlang release for Hex.pm
       run: |
-        mkdir -p _build/default/hex
-        TARBALL=$(rebar3 hex package | awk '/creates /{print $2}')
-        echo "Created $TARBALL"
+        # Buat paket; hasilnya ditaruh di _build/default/hex/
+        rebar3 hex package
+        # Cari file .tar yang baru dibuat
+        TARBALL=$(ls _build/default/hex/*.tar)
+        echo "Created release tarball: $TARBALL"
 
     - name: Publish to Hex.pm via API
       env:
         HEX_API_KEY: ${{ secrets.GitHubIoT }}
       run: |
-        curl -v \
+        # Ambil kembali nama file .tar
+        TARBALL=$(ls _build/default/hex/*.tar)
+        echo "Uploading $TARBALL to Hex.pm…"
+        curl --fail -v \
           -H "Authorization: Bearer $HEX_API_KEY" \
           -F "tarball=@${TARBALL}" \
           https://repo.hex.pm/api/packages/githubiot/releases
