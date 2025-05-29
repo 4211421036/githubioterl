@@ -23,24 +23,20 @@ jobs:
 
       - name: Setup and Build
         run: |
-          # Setup rebar3_hex plugin
           mkdir -p ~/.config/rebar3
           echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
 
-          # Build & test
           rebar3 deps
           rebar3 compile
           rebar3 eunit
 
-      - name: Authenticate with Hex.pm
+      - name: Configure Hex.pm API key
         run: |
           mkdir -p ~/.hex
-          # Simpan API key
-          echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
-          chmod 600 ~/.hex/hex_api_key
-
-          # Juga jalankan auth pada rebar3
-          rebar3 hex user auth "${{ secrets.HEX_API_KEY }}"
+          cat <<EOF > ~/.hex/hex.config
+          {default, [{api_key, "${HEX_API_KEY}"}]}.
+          EOF
+          chmod 600 ~/.hex/hex.config
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
 
@@ -48,5 +44,3 @@ jobs:
         run: |
           echo "Publishing to Hex.pm..."
           rebar3 hex publish --yes
-        env:
-          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
