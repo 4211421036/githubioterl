@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -41,11 +43,18 @@ jobs:
       run: |
         rebar3 ex_doc
         
-    - name: Publish to Hex
-      if: github.ref == 'refs/heads/main'
+    - name: Build and generate docs
+      run: |
+        rebar3 compile
+        rebar3 ex_doc
+        
+    - name: Configure Hex.pm
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
       run: |
         mkdir -p ~/.config/rebar3
         echo '{hex, [{api_key, "'"$HEX_API_KEY"'"}]}.' > ~/.config/rebar3/hex.config
+        
+    - name: Publish package
+      run: |
         rebar3 hex publish --yes
