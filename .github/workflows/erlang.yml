@@ -58,12 +58,13 @@ jobs:
         rebar3 deps
         rebar3 compile
     
-    - name: Authenticate with Hex
+    - name: Authenticate and Publish to Hex.pm
       run: |
         echo "Setting up authentication..."
-        # Using expect to handle interactive authentication
+        # Install expect for interactive authentication
         sudo apt-get update && sudo apt-get install -y expect
         
+        echo "Authenticating with Hex.pm..."
         expect << 'EOF'
         spawn rebar3 hex user auth
         expect "Username:" { send "$env(HEX_USERNAME)\r" }
@@ -71,20 +72,13 @@ jobs:
         expect eof
         EOF
         
-        echo "Authentication completed"
-      env:
-        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
-        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-    
-    - name: Verify authentication
-      run: |
-        echo "Verifying authentication..."
+        echo "Authentication completed, verifying..."
         rebar3 hex user whoami
-    
-    - name: Publish to Hex.pm
-      run: |
+        
         echo "Publishing to Hex.pm..."
         rebar3 hex publish --yes
+        
+        echo "Publication completed successfully!"
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
