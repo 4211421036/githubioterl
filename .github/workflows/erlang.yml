@@ -1,5 +1,4 @@
 name: Erlang CI/CD
-
 on:
   push:
     branches: [ main ]
@@ -42,28 +41,46 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: |
         rebar3 ex_doc
+
+  publish:
+    name: Publish to Hex.pm
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Erlang
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: "26.0"
         
-    - name: Build and generate docs
+    - name: Install Rebar3
       run: |
-        rebar3 compile
-        rebar3 ex_doc
-
-    - name: Package Erlang release for Hex.pm
+        curl -LO https://s3.amazonaws.com/rebar3/rebar3
+        chmod +x rebar3
+        sudo mv rebar3 /usr/local/bin/
+        
+    - name: Install dependencies
+      run: rebar3 deps
+      
+    - name: Compile
+      run: rebar3 compile
+      
+    - name: Run tests before publish
+      run: rebar3 eunit
+      
+    - name: Configure Hex credentials
       run: |
-        # Buat paket; hasilnya ditaruh di _build/default/hex/
-        rebar3 hex package
-        # Cari file .tar yang baru dibuat
-        TARBALL=$(ls _build/default/hex/*.tar)
-        echo "Created release tarball: $TARBALL"
-
-    - name: Publish to Hex.pm via API
+        mkdir -p ~/.config/rebar3
+        echo "{hex, [{username, <<\"${{ secrets.HEX_USERNAME }}\">>}, {key, <<\"${{ secrets.HEX_API_KEY }}\">>}]}." > ~/.config/rebar3/hex.config
       env:
-        HEX_API_KEY: ${{ secrets.GitHubIoT }}
+        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        
+    - name: Publish to Hex.pm
       run: |
-        # Ambil kembali nama file .tar
-        TARBALL=$(ls _build/default/hex/*.tar)
-        echo "Uploading $TARBALL to Hex.pm…"
-        curl --fail -v \
-          -H "Authorization: Bearer $HEX_API_KEY" \
-          -F "tarball=@${TARBALL}" \
-          https://repo.hex.pm/api/packages/githubiot/releases
+        rebar3 hex publish --yes
+      env:
+        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
