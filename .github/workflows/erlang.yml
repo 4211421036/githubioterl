@@ -77,16 +77,24 @@ jobs:
       
     - name: Configure Hex authentication
       run: |
-        mkdir -p ~/.hex
-        echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
+        mkdir -p ~/.config/rebar3
+        cat > ~/.config/rebar3/hex.config << EOF
+        {api_key, <<"$HEX_API_KEY">>}.
+        {username, <<"$HEX_USERNAME">>}.
+        EOF
+        echo "Config created, testing auth..."
+        rebar3 hex user whoami
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.GITHUBIOT }}
         
     - name: Debug - Check hex config
       run: |
-        rebar3 hex user whoami || echo "Not authenticated"
+        echo "Testing authentication..."
+        rebar3 hex user whoami
+        echo "List config files:"
         ls -la ~/.config/rebar3/ || echo "No config dir"
+        ls -la ~/.hex/ || echo "No hex dir"
         
     - name: Publish to Hex.pm
       run: |
