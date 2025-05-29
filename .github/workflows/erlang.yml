@@ -48,20 +48,9 @@ jobs:
         rebar3 compile
         rebar3 ex_doc
         
-    - name: Configure Hex.pm
+    - name: Publish package to Hex.pm
       env:
         HEX_API_KEY: ${{ secrets.GitHubIoT }}
-      run: |
-        mkdir -p ~/.config/rebar3
-        echo '{hex, [{api_key, "'"$HEX_API_KEY"'"}]}.' \
-          > ~/.config/rebar3/hex.config
-
-    - name: Generate rebar3 report
-      run: rebar3 report "hex publish" || true
-
-    - name: Publish package to Hex.pm (diagnostic)
-      env:
-        HEX_API_KEY: ${{ secrets.GitHubIoT }}
-        DIAGNOSTIC: 1
       run: rebar3 hex publish --yes
+
 
