@@ -88,24 +88,51 @@ jobs:
     
     - name: Configure Hex authentication
       run: |
-        echo "Configuring Hex authentication"
-        # Create hex config directory
+        echo "Configuring Hex authentication..."
+        
+        # Method 1: Set environment variable for rebar3_hex
+        export HEX_API_KEY="$HEX_API_KEY"
+        
+        # Method 2: Create hex config with proper format
+        mkdir -p ~/.config/rebar3
+        cat > ~/.config/rebar3/hex_config << EOF
+          {hex_config, [
+              {api_key, <<"$HEX_API_KEY">>},
+              {username, <<"$HEX_USERNAME">>}
+          ]}.
+          EOF
+        
+        # Method 3: Alternative config location
         mkdir -p ~/.hex
-        
-        # Write API key to hex config
         echo "$HEX_API_KEY" > ~/.hex/hex_api_key
-        
-        # Set proper permissions
         chmod 600 ~/.hex/hex_api_key
         
-        # Verify authentication
-        rebar3 hex user whoami
+        # Test authentication
+        echo "Testing authentication..."
+        rebar3 hex user whoami || echo "Direct auth test failed, will try during publish"
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
     
     - name: Publish to Hex.pm
       run: |
         echo "Publishing to Hex.pm..."
-        rebar3 hex publish --yes
+        
+        # Set environment variables for hex
+        export HEX_API_KEY="$HEX_API_KEY"
+        export HEX_USERNAME="$HEX_USERNAME"
+        
+        # Try multiple publish methods
+        echo "Attempting to publish..."
+        
+        # Method 1: Direct publish with env vars
+        rebar3 hex publish --yes || {
+          echo "Method 1 failed, trying method 2..."
+          
+          # Method 2: With explicit auth
+          echo "$HEX_API_KEY" | rebar3 hex user auth --stdin --username "$HEX_USERNAME" || echo "Auth failed"
+          rebar3 hex publish --yes
+        }
       env:
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
