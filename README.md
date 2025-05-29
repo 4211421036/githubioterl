@@ -1,5 +1,5 @@
 # GitHubIoT Erlang Module Documentation
-*Version 1.0.0 - February 2025*
+*Version 0.1.0 - May 2025*
 
 <p align="center">
   <img src="https://4211421036.github.io/githubiotpy/img/GitHub%20IoT%20Logo.png" alt="GitHubIoT Logo" style="width: 50%;">
