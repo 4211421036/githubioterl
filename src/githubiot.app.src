@@ -1,17 +1,8 @@
 {application, githubiot,
  [
-  {description, "GitHub IoT Library for Erlang"},
-  {vsn, "0.1.0"},
-  {id, "githubiot"},
-  {registered, []},
-  {applications, [kernel, stdlib, inets, ssl, crypto]},
-  {env,[]},
+  {description, "GitHub IoT Library"},
+  {vsn, "0.1.0"},  % Update this before each release
   {modules, [githubiot]},
-  
   {licenses, ["MIT"]},
-  {links, [{"GitHub", "https://github.com/4211421036/githubioterl"}]},
-  
-  {author, "GALIH RIDHO UTOMO"},
-  {contact, "g4lihru@students.unnes.ac.id"},
-  {repository, {git, "https://github.com/4211421036/githubioterl.git"}}
+  {links, [{"GitHub", "https://github.com/yourusername/githubiot"}]}
  ]}.
