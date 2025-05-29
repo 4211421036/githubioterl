@@ -77,7 +77,8 @@ jobs:
       
     - name: Configure Hex authentication
       run: |
-        rebar3 hex user auth --username=$HEX_USERNAME --key=$HEX_API_KEY
+        mkdir -p ~/.hex
+        echo "${{ secrets.HEX_API_KEY }}" > ~/.hex/hex_api_key
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.GITHUBIOT }}
