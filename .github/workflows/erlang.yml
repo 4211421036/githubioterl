@@ -47,23 +47,42 @@ jobs:
         otp-version: "26.0"
         rebar3-version: "3.22.1"
     
-    - name: Install hex plugin
+    - name: Setup hex plugin
       run: |
         mkdir -p ~/.config/rebar3
         echo '{plugins, [rebar3_hex]}.' > ~/.config/rebar3/rebar.config
+        echo "Hex plugin configured"
     
     - name: Compile
       run: |
         rebar3 deps
         rebar3 compile
     
-    - name: Authenticate and Publish to Hex.pm
+    - name: Authenticate with Hex
       run: |
-        echo "Authenticating with Hex.pm..."
+        echo "Setting up authentication..."
+        # Using expect to handle interactive authentication
+        sudo apt-get update && sudo apt-get install -y expect
         
-        # Create authentication with API key
-        printf '%s\n%s\n' "$HEX_USERNAME" "$HEX_API_KEY" | rebar3 hex user auth
+        expect << 'EOF'
+        spawn rebar3 hex user auth
+        expect "Username:" { send "$env(HEX_USERNAME)\r" }
+        expect "Password:" { send "$env(HEX_API_KEY)\r" }
+        expect eof
+        EOF
         
+        echo "Authentication completed"
+      env:
+        HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+    
+    - name: Verify authentication
+      run: |
+        echo "Verifying authentication..."
+        rebar3 hex user whoami
+    
+    - name: Publish to Hex.pm
+      run: |
         echo "Publishing to Hex.pm..."
         rebar3 hex publish --yes
       env:
