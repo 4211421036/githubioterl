@@ -1,5 +1,5 @@
 -module(githubiot).
--export([init/2, get_current_sha/1, upload_to_github/3]).
+-export([init/2, get_current_sha/1, upload_to_github/3]).  % Di export upload_to_github/3
 
 %% @doc Initialize the module with token and repo URL
 -spec init(string(), string()) -> map().
@@ -35,7 +35,7 @@ get_current_sha(State = #{token := Token, repo_url := RepoUrl}) ->
 
 %% @doc Upload data to GitHub repository
 -spec upload_to_github(map(), map(), string()) -> {ok, string(), map()} | {error, term(), map()}.
-upload_to_sha(State = #{token := Token, repo_url := RepoUrl}, JsonData, LastSha) ->
+upload_to_github(State = #{token := Token, repo_url := RepoUrl}, JsonData, LastSha) ->  % Diubah namanya menjadi upload_to_github
     Headers = [
         {"Authorization", Token},
         {"Content-Type", "application/json"},
