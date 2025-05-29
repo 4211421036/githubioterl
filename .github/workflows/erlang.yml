@@ -61,6 +61,9 @@ jobs:
         chmod +x rebar3
         sudo mv rebar3 /usr/local/bin/
         
+    - name: Install hex plugin
+      run: rebar3 plugins install rebar3_hex
+      
     - name: Install dependencies
       run: rebar3 deps
       
@@ -70,17 +73,21 @@ jobs:
     - name: Run tests before publish
       run: rebar3 eunit
       
-    - name: Configure Hex credentials
+    - name: Configure Hex authentication
       run: |
-        mkdir -p ~/.config/rebar3
-        echo "{hex, [{username, <<\"${{ secrets.HEX_USERNAME }}\">>}, {key, <<\"${{ secrets.HEX_API_KEY }}\">>}]}." > ~/.config/rebar3/hex.config
+        rebar3 hex user auth
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
         
+    - name: Debug - Check hex config
+      run: |
+        rebar3 hex user whoami || echo "Not authenticated"
+        ls -la ~/.config/rebar3/ || echo "No config dir"
+        
     - name: Publish to Hex.pm
       run: |
-        rebar3 hex publish --yes
+        DIAGNOSTIC=1 rebar3 hex publish --yes || rebar3 report "hex publish --yes"
       env:
         HEX_USERNAME: ${{ secrets.HEX_USERNAME }}
         HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
