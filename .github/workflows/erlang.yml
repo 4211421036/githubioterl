@@ -1,0 +1,59 @@
+name: Erlang CI & Module
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Erlang
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: '25.3'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y rebar3
+
+    - name: Build project
+      run: |
+        rebar3 compile
+        rebar3 ct  # Jika ada test
+
+    - name: Run example
+      run: |
+        erl -pa _build/default/lib/*/ebin -noshell -eval 'example:main()' -s init stop
+
+    - name: Archive module
+      uses: actions/upload-artifact@v3
+      with:
+        name: erlang-modules
+        path: _build/default/lib/*/ebin/*.beam
+
+    - name: Commit compiled modules
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        
+        # Buat folder untuk beam files jika belum ada
+        mkdir -p beam_files
+        
+        # Copy beam files
+        cp _build/default/lib/*/ebin/*.beam beam_files/
+        
+        git add beam_files/
+        
+        if git commit -m "Auto-commit compiled BEAM files"; then
+          git push
+        else
+          echo "No changes to commit."
+        fi
