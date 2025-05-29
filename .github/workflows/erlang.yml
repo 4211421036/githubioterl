@@ -30,17 +30,10 @@ jobs:
           rebar3 compile
           rebar3 eunit
 
-      - name: Configure Hex.pm API key
-        run: |
-          mkdir -p ~/.hex
-          cat <<EOF > ~/.hex/hex.config
-          {default, [{api_key, "${HEX_API_KEY}"}]}.
-          EOF
-          chmod 600 ~/.hex/hex.config
+      - name: Publish to Hex.pm
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-
-      - name: Publish to Hex.pm
         run: |
           echo "Publishing to Hex.pm..."
-          rebar3 hex publish --yes
+          # langsung kirim API key tanpa prompt interaktif
+          rebar3 hex publish --yes --key "${HEX_API_KEY}"
