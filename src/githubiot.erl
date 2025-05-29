@@ -1,6 +1,11 @@
 -module(githubiot).
 -export([init/2, get_current_sha/1, upload_to_github/3]).
 
+%% Add these type specifications for JSX functions
+-type jsx_json_term() :: jsx:json_term().
+-type jsx_decoder_option() :: jsx:decoder_option().
+-type jsx_encoder_option() :: jsx:encoder_option().
+
 -type state() :: #{token := binary(), repo_url := binary(), last_sha := binary()}.
 
 %% @doc Initialize the module with token and repo URL
@@ -43,7 +48,7 @@ get_current_sha(State = #{token := Token, repo_url := RepoUrl}) ->
     end.
 
 %% @doc Upload data to GitHub repository
--spec upload_to_github(state(), map(), binary()) -> {ok, binary(), state()} | {error, term(), state()}.
+-spec upload_to_github(state(), jsx_json_term(), binary()) -> {ok, binary(), state()} | {error, term(), state()}.
 upload_to_github(State = #{token := Token, repo_url := RepoUrl, last_sha := LastSha}, JsonData, _) ->
     Headers = [
         {"Authorization", binary_to_list(Token)},
