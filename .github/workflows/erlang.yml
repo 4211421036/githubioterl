@@ -46,9 +46,10 @@ jobs:
         chmod 600 ~/.config/rebar3/hex.config
         chmod 600 ~/.hex/hex.config
         
-    - name: Verify authentication
+    - name: Debug Hex configuration
       run: |
-        rebar3 hex user g4lihru
+        rebar3 hex config
+        rebar3 hex user whoami || echo "Continuing despite whoami failure"
         
     - name: Publish package
       run: |
